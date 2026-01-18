@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>99ML Simulator - TI-99/4A Web Browser</title>
+  <meta name="description"
+    content="Simulate how 99ML markup renders on the TI-99/4A using Stuart's Internet Web Browser">
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>99ML Simulator</h1>
+      <p class="subtitle">TI-99/4A Stuart's Web Browser Preview</p>
+    </header>
+
+    <main class="main-content">
+      <section class="editor-panel">
+        <div class="panel-header">
+          <h2>99ML Source</h2>
+          <div class="editor-actions">
+            <button id="loadSample" class="btn btn-secondary">Load Sample</button>
+            <button id="clearBtn" class="btn btn-ghost">Clear</button>
+          </div>
+        </div>
+        <textarea id="sourceInput" placeholder="Enter 99ML markup here...
+Example:
+<99ml>
+<clr:F:4><pos:00:0E>HELLO TI-99/4A!
+<clr:1:F><pos:02:00>Welcome to the Web Browser.
+<a href=&quot;next.99ml&quot; pos=&quot;0500&quot;>Next Page</a>
+</99ml>"></textarea>
+        <button id="renderBtn" class="btn btn-primary">Render Preview</button>
+      </section>
+
+      <section class="preview-panel">
+        <div class="panel-header">
+          <h2>TI-99/4A Display</h2>
+          <div class="display-info">
+            <span class="info-badge">40×24</span>
+            <span class="info-badge">16 Colors</span>
+            <div
+              style="display: flex; align-items: center; gap: 0.3rem; margin-left: 0.5rem; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 0.75rem;">
+              <input type="checkbox" id="aspectRatioToggle" style="width: auto; cursor: pointer;">
+              <label for="aspectRatioToggle"
+                style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0;">4:3
+                CRT</label>
+            </div>
+          </div>
+        </div>
+        <div class="crt-container">
+          <div class="crt-bezel">
+            <div class="crt-screen" id="crtScreen">
+              <div class="scanlines"></div>
+              <div class="screen-content" id="screenContent">
+                <!-- 40x24 character grid will be rendered here -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="status-bar">
+          <span id="cursorPos">Cursor: 00:00</span>
+          <span id="linkCount">Links: 0</span>
+        </div>
+      </section>
+    </main>
+
+    <aside class="converter-panel">
+      <div class="panel-header">
+        <h2>Settings</h2>
+      </div>
+      <div class="settings-group">
+        <label for="serverUrlInput">Converter Server URL</label>
+        <input type="url" id="serverUrlInput" placeholder="http://localhost:7198" value="http://localhost:7198">
+      </div>
+    </aside>
+    </aside>
+
+    <aside class="converter-panel">
+      <div class="panel-header">
+        <h2>URL Converter</h2>
+      </div>
+      <div class="url-input-group">
+        <input type="url" id="urlInput" placeholder="https://example.com">
+        <button id="convertBtn" class="btn btn-accent">Convert</button>
+      </div>
+      <p class="helper-text">Convert a modern webpage to 99ML using the configured server</p>
+      <div id="converterStatus" class="status-message"></div>
+    </aside>
+
+    <footer class="app-footer">
+      <p>Based on <a href="http://www.stuartconner.me.uk/ti/ti.htm#internet_web_browser" target="_blank">Stuart's
+          Internet Web Browser</a> for TI-99/4A</p>
+    </footer>
+  </div>
+
+  <script src="simulator.js" type="module"></script>
+</body>
+
+</html>
