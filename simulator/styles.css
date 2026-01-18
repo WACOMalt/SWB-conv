@@ -216,10 +216,15 @@ body {
   position: relative;
   background: var(--ti-dark-blue);
   border-radius: 8px;
-  overflow: hidden;
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  overflow-x: hidden;
+  /* Prevent horizontal scrollbars from scaling */
   box-shadow:
     inset 0 0 60px rgba(0, 0, 0, 0.4),
     0 0 20px var(--crt-glow);
+  height: 352px;
+  /* Fixed viewport height */
 }
 
 .screen-content {
@@ -231,7 +236,9 @@ body {
   z-index: 1;
   /* 40 chars × ~8.4px = ~336px, 24 rows × 14px = 336px */
   width: 352px;
-  height: 352px;
+  height: auto;
+  /* Allow growth */
+  min-height: 352px;
   transition: transform 0.3s ease;
 }
 
@@ -249,11 +256,13 @@ body {
 }
 
 .scanlines {
-  position: absolute;
+  position: sticky;
+  /* Keep scanlines fixed on screen while scrolling */
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  height: 352px;
+  /* Match viewport height */
   background: repeating-linear-gradient(0deg,
       var(--crt-scanline),
       var(--crt-scanline) 1px,
@@ -262,6 +271,57 @@ body {
   pointer-events: none;
   z-index: 2;
   opacity: 0.4;
+  margin-bottom: -352px;
+  /* Pull content up so it doesn't take space? No, sticky takes space. */
+  /* Sticky elements take space in the flow. If I want it to overlay, I should use absolute but handle scrolling.
+     Actually, if I use sticky, it sits at the top of the scroll container.
+     But it pushes content down? Yes.
+     So sticky isn't quite right unless I float it or use negative margin.
+     
+     Better: Move scanlines OUTSIDE the scrollable area in HTML?
+     But I can't easily change HTML structure without risk.
+     
+     Alternative: Scanlines as `position: absolute` inside a WRAPPER, and `crt-screen` is the scrollable child?
+     No.
+     
+     Let's use `position: sticky` and `margin-bottom: -352px` to overlap?
+     Or `position: absolute` but update `top` on scroll? JS heavy.
+     
+     Wait, if `.crt-screen` has `overflow: auto`, and `.scanlines` is `position: fixed` relative to screen?
+     No, `fixed` is to viewport.
+     
+     If `.crt-screen` is `relative`, and `scanlines` is `absolute`, it scrolls.
+     
+     Let's go with the `pointer-events: none` overlay approach.
+     I'll make `.crt-screen` the FRAME (no scroll, overflow hidden).
+     I'll ADD a simplified scrollable inner wrapper in `simulator.js`?
+     Or just accept scanlines scroll with content? That's acceptable for now?
+     No, scanlines moving looks bad.
+     
+     Let's try `background-attachment: local` vs `scroll`?
+     Scanlines are a `div`.
+     
+     If I change HTML via `simulator.js` init?
+     `initScreen` or `DOMContentLoaded`:
+     const container = document.getElementById('crtScreen');
+     // Wrap content in a scrollable div?
+     
+     Let's try to just style it first. 
+     If I set `.scanlines` to `position: absolute; top: 0;` and `.screen-content` as the only scrollable thing?
+     But they are siblings.
+     If `.crt-screen` handles scroll, both scroll.
+     
+     If I give `.scanlines` `position: sticky; top: 0;` and remove it from flow with `margin-bottom: -100%`?
+     Let's try:
+     position: sticky;
+     top: 0;
+     height: 352px;
+     margin-bottom: -352px;
+     z-index: 10;
+     
+     This should make it sit at top, take no space (due to negative margin), and stay there.
+  */
+  margin-bottom: -352px;
 }
 
 /* Character Grid */

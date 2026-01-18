@@ -24,8 +24,10 @@ const TI_COLORS = {
 };
 
 // Screen dimensions
+// Screen dimensions
 const COLS = 40;
-const ROWS = 24;
+const MIN_ROWS = 24;
+// ROWS is no longer fixed, screenBuffer determines height
 
 // Screen state
 let screenBuffer = [];
@@ -48,12 +50,22 @@ function initScreen() {
   cursorRow = 0;
   cursorCol = 0;
 
-  for (let r = 0; r < ROWS; r++) {
-    screenBuffer[r] = [];
-    colorBuffer[r] = [];
+  for (let r = 0; r < MIN_ROWS; r++) {
+    expandBufferToRow(r);
+  }
+}
+
+/**
+ * Ensure buffer exists up to row r
+ */
+function expandBufferToRow(r) {
+  while (screenBuffer.length <= r) {
+    const newRowIndex = screenBuffer.length;
+    screenBuffer[newRowIndex] = [];
+    colorBuffer[newRowIndex] = [];
     for (let c = 0; c < COLS; c++) {
-      screenBuffer[r][c] = ' ';
-      colorBuffer[r][c] = { fg: 'F', bg: '4' };
+      screenBuffer[newRowIndex][c] = ' ';
+      colorBuffer[newRowIndex][c] = { fg: 'F', bg: '4' };
     }
   }
 }
@@ -101,6 +113,7 @@ function parse99ML(source) {
           const pos = posMatch[1].toUpperCase();
           cursorRow = hexToDec(pos.substring(0, 2));
           cursorCol = hexToDec(pos.substring(2, 4));
+          expandBufferToRow(cursorRow);
           linkStart = { row: cursorRow, col: cursorCol };
         }
         linkText = '';
@@ -151,7 +164,7 @@ function processTag(tagContent) {
   if (lowerTag === 'br' || lowerTag === 'br/') {
     cursorRow++;
     cursorCol = 0;
-    if (cursorRow >= ROWS) cursorRow = ROWS - 1;
+    expandBufferToRow(cursorRow);
     return;
   }
 
@@ -160,8 +173,8 @@ function processTag(tagContent) {
   if (posMatch) {
     cursorRow = hexToDec(posMatch[1]);
     cursorCol = hexToDec(posMatch[2]);
-    // Clamp to screen bounds
-    cursorRow = Math.min(cursorRow, ROWS - 1);
+    expandBufferToRow(cursorRow);
+    // Clamp col
     cursorCol = Math.min(cursorCol, COLS - 1);
     return;
   }
@@ -192,12 +205,13 @@ function processTag(tagContent) {
  * Write a character at current cursor position
  */
 function writeChar(char) {
-  if (cursorRow >= ROWS) return;
+  expandBufferToRow(cursorRow);
+
   if (cursorCol >= COLS) {
     // Wrap to next line
     cursorCol = 0;
     cursorRow++;
-    if (cursorRow >= ROWS) return;
+    expandBufferToRow(cursorRow);
   }
 
   screenBuffer[cursorRow][cursorCol] = char;
@@ -233,7 +247,7 @@ function renderScreen() {
   const container = document.getElementById('screenContent');
   container.innerHTML = '';
 
-  for (let r = 0; r < ROWS; r++) {
+  for (let r = 0; r < screenBuffer.length; r++) {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'char-row';
 

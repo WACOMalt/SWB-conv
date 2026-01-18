@@ -88,14 +88,14 @@ async function extractPageData(page) {
 
         // Calculate character cell size
         const charWidth = viewportWidth / 40;  // Map viewport to 40 cols
-        const charHeight = viewportHeight / 24; // Map viewport to 24 rows
+        const charHeight = viewportHeight / 24; // map viewport to 24 rows for scale, but allow more rows
 
         // Helper to get element position in grid coordinates
         function getGridPos(rect) {
             const col = Math.floor(rect.left / charWidth);
             const row = Math.floor(rect.top / charHeight);
             return {
-                row: Math.max(0, Math.min(23, row)),
+                row: Math.max(0, row), // No max row limit
                 col: Math.max(0, Math.min(39, col))
             };
         }
@@ -110,9 +110,9 @@ async function extractPageData(page) {
                 style.opacity !== '0' &&
                 rect.width > 0 &&
                 rect.height > 0 &&
-                rect.top < viewportHeight &&
                 rect.bottom > 0 &&
                 rect.left < viewportWidth
+                // Removed rect.top < viewportHeight check to allow full page
             );
         }
 
@@ -198,9 +198,15 @@ async function extractPageData(page) {
  * Generate 99ML markup from extracted page data
  */
 function generateML(pageData, sourceUrl) {
+    // Determine max rows needed
+    let maxRow = ROWS; // at least 24
+    for (const node of pageData.textNodes) {
+        if (node.row + 1 > maxRow) maxRow = node.row + 1;
+    }
+
     // Create a grid to track what's placed
     const grid = [];
-    for (let r = 0; r < ROWS; r++) {
+    for (let r = 0; r < maxRow; r++) {
         grid[r] = new Array(COLS).fill(null);
     }
 
@@ -234,10 +240,13 @@ function generateML(pageData, sourceUrl) {
 
     // Process text nodes
     for (const node of sortedNodes) {
-        // Skip if this row is too far down
-        if (node.row >= ROWS - 2) continue;
+        // Skip if this row is beyond reasonable limit (e.g. 255 for hex compatibility)
+        if (node.row >= 255) continue;
 
         // Find available space in this row
+        // Ensure row exists in grid (it should based on maxRow, but safety check)
+        if (!grid[node.row]) continue;
+
         let startCol = node.col;
         while (startCol < COLS && grid[node.row][startCol]) {
             startCol++;
@@ -273,9 +282,7 @@ function generateML(pageData, sourceUrl) {
 
         // Mark grid cells as used
         for (let i = 0; i < text.length && (startCol + i) < COLS; i++) {
-            if (node.row < ROWS) {
-                grid[node.row][startCol + i] = 'text';
-            }
+            grid[node.row][startCol + i] = 'text';
         }
     }
 
